@@ -33,15 +33,34 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
     ];
   }
 
-  const tickets = await prisma.ticket.findMany({
+  const rawTickets = await prisma.ticket.findMany({
     where,
-    include: {
-      creator: { select: { name: true, department: true } },
-      assignee: { select: { name: true } },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      priority: true,
+      status: true,
+      createdAt: true,
+      creatorId: true,
+      assigneeId: true,
       _count: { select: { comments: true } },
     },
     orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
   });
+
+  // Load related users separately to avoid runtime errors when DB has inconsistent relations
+  const userIds = Array.from(new Set(rawTickets.flatMap(t => [t.creatorId, t.assigneeId].filter(Boolean) as number[])));
+  const users = userIds.length > 0
+    ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, department: true } })
+    : [];
+  const userMap = new Map(users.map(u => [u.id, u]));
+
+  const tickets = rawTickets.map(t => ({
+    ...t,
+    creator: userMap.get(t.creatorId) ?? { name: '—', department: null },
+    assignee: t.assigneeId ? (userMap.get(t.assigneeId) ?? null) : null,
+  }));
 
   return (
     <div className="p-8">
