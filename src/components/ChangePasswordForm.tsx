@@ -124,7 +124,7 @@ const PasswordInputField = memo(function PasswordInputField({
 
 export default function ChangePasswordForm() {
   const router = useRouter();
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
   const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -136,7 +136,7 @@ export default function ChangePasswordForm() {
   );
 
   const handlePasswordChange = useCallback(
-    (field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) =>
+    (field: 'newPassword' | 'confirmPassword', value: string) =>
       setForm((prev) => ({ ...prev, [field]: value })),
     []
   );
@@ -190,16 +190,6 @@ export default function ChangePasswordForm() {
           {error}
         </div>
       )}
-
-      <PasswordInputField
-        label="Senha temporária atual"
-        field="currentPassword"
-        value={form.currentPassword}
-        placeholder="Digite a senha temporária"
-        showPassword={showPasswords.current}
-        onToggleShow={() => toggleShow('current')}
-        onChange={(value) => handlePasswordChange('currentPassword', value)}
-      />
 
       <PasswordInputField
         label="Nova senha"

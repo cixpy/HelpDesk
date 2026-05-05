@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const { currentPassword, newPassword, confirmPassword } = await req.json();
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 });
     }
 
@@ -27,13 +27,15 @@ export async function POST(req: NextRequest) {
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
     if (!dbUser) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
 
-    const validCurrent = await comparePassword(currentPassword, dbUser.password);
-    if (!validCurrent) {
-      return NextResponse.json({ error: 'Senha atual incorreta' }, { status: 400 });
-    }
+    if (currentPassword) {
+      const validCurrent = await comparePassword(currentPassword, dbUser.password);
+      if (!validCurrent) {
+        return NextResponse.json({ error: 'Senha atual incorreta' }, { status: 400 });
+      }
 
-    if (currentPassword === newPassword) {
-      return NextResponse.json({ error: 'A nova senha deve ser diferente da senha atual' }, { status: 400 });
+      if (currentPassword === newPassword) {
+        return NextResponse.json({ error: 'A nova senha deve ser diferente da senha atual' }, { status: 400 });
+      }
     }
 
     const hashed = await hashPassword(newPassword);
