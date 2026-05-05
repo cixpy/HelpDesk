@@ -1,5 +1,6 @@
 'use client';
 // src/components/Sidebar.tsx
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -72,6 +73,22 @@ const roleBadgeColors: Record<string, string> = {
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -85,6 +102,7 @@ export default function Sidebar({ user }: SidebarProps) {
     return (
       <Link
         href={href}
+        onClick={() => setMobileMenuOpen(false)}
         className={clsx(
           'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
           isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -97,63 +115,112 @@ export default function Sidebar({ user }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-100 flex flex-col h-screen sticky top-0">
-      {/* Logo */}
-      <div className="p-6 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <>
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 shadow-sm md:hidden">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <div>
-            <p className="font-bold text-slate-800 text-sm leading-tight">TI Helpdesk</p>
-            <p className="text-xs text-slate-400">Sistema de Chamados</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold leading-tight text-slate-800">TI Helpdesk</p>
+            <p className="truncate text-xs text-slate-400">Sistema de Chamados</p>
           </div>
         </div>
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-        ))}
-
-        {user.role === 'ADMIN' && (
-          <>
-            <div className="pt-4 pb-1">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3">Administração</p>
-            </div>
-            {adminNavItems.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-            ))}
-          </>
-        )}
-      </nav>
-
-      {/* User */}
-      <div className="p-4 border-t border-slate-100">
-        <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-50 mb-2">
-          <div className="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-800 truncate">{user.name}</p>
-            <span className={clsx('text-xs px-1.5 py-0.5 rounded-md font-medium', roleBadgeColors[user.role])}>
-              {roleLabels[user.role]}
-            </span>
-          </div>
-        </div>
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600"
+          aria-label="Abrir menu"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          Sair
         </button>
       </div>
-    </aside>
+
+      <div
+        className={clsx(
+          'fixed inset-0 z-40 bg-slate-900/40 transition-opacity md:hidden',
+          mobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      <aside
+        className={clsx(
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-100 bg-white shadow-xl transition-transform duration-300 md:sticky md:top-0 md:w-64 md:translate-x-0 md:shadow-none',
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600">
+              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold leading-tight text-slate-800">TI Helpdesk</p>
+              <p className="text-xs text-slate-400">Sistema de Chamados</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 md:hidden"
+            aria-label="Fechar menu"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+          {navItems.map((item) => (
+            <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+          ))}
+
+          {user.role === 'ADMIN' && (
+            <>
+              <div className="pb-1 pt-4">
+                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Administração</p>
+              </div>
+              {adminNavItems.map((item) => (
+                <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+              ))}
+            </>
+          )}
+        </nav>
+
+        <div className="border-t border-slate-100 p-4">
+          <div className="mb-2 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-800">{user.name}</p>
+              <span className={clsx('rounded-md px-1.5 py-0.5 text-xs font-medium', roleBadgeColors[user.role])}>
+                {roleLabels[user.role]}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sair
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
