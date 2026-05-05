@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
         department: true,
         mustChangePassword: true,
         createdAt: true,
+        _count: { select: { ticketsCreated: true } },
       },
     });
 
