@@ -1,0 +1,117 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+enum Role {
+  USER
+  TECHNICIAN
+  ADMIN
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum Category {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  ACCESS
+  EMAIL
+  PRINTER
+  OTHER
+}
+
+model User {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  email              String   @unique
+  password           String
+  role               Role     @default(USER)
+  department         String?
+  phone              String?
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  ticketsCreated  Ticket[]        @relation("TicketCreator")
+  ticketsAssigned Ticket[]        @relation("TicketAssignee")
+  comments        Comment[]
+  statusHistory   StatusHistory[]
+
+  @@index([email])
+}
+
+model Ticket {
+  id         Int       @id @default(autoincrement())
+  title      String
+  description String   @db.Text
+  priority   Priority  @default(MEDIUM)
+  status     Status    @default(OPEN)
+  category   Category  @default(OTHER)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+
+  creatorId  Int
+  creator    User  @relation("TicketCreator", fields: [creatorId], references: [id])
+  assigneeId Int?
+  assignee   User? @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  comments      Comment[]
+  statusHistory StatusHistory[]
+
+  @@index([creatorId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+}
+
+model Comment {
+  id         Int     @id @default(autoincrement())
+  content    String  @db.Text
+  isInternal Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model StatusHistory {
+  id        Int      @id @default(autoincrement())
+  oldStatus Status?
+  newStatus Status
+  note      String?
+  createdAt DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+}

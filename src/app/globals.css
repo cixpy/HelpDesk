@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-inter);
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+@layer components {
+  .badge-priority-LOW {
+    @apply bg-slate-100 text-slate-600 border border-slate-200;
+  }
+  .badge-priority-MEDIUM {
+    @apply bg-amber-50 text-amber-700 border border-amber-200;
+  }
+  .badge-priority-HIGH {
+    @apply bg-orange-50 text-orange-700 border border-orange-200;
+  }
+  .badge-priority-CRITICAL {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  .badge-status-OPEN {
+    @apply bg-blue-50 text-blue-700 border border-blue-200;
+  }
+  .badge-status-IN_PROGRESS {
+    @apply bg-violet-50 text-violet-700 border border-violet-200;
+  }
+  .badge-status-WAITING_USER {
+    @apply bg-yellow-50 text-yellow-700 border border-yellow-200;
+  }
+  .badge-status-RESOLVED {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+  .badge-status-CLOSED {
+    @apply bg-slate-100 text-slate-500 border border-slate-200;
+  }
+}
