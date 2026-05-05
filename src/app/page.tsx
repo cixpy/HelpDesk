@@ -8,6 +8,7 @@ import LoginForm from '@/components/LoginForm';
 export default async function Home() {
   const user = await getCurrentUser();
   if (user) redirect('/dashboard');
+  const currentYear = new Date().getFullYear();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900 flex items-center justify-center p-4">
@@ -32,7 +33,7 @@ export default async function Home() {
 
         {/* Footer */}
         <p className="text-center text-slate-500 text-xs mt-6">
-          © 2024 TI Helpdesk. Todos os direitos reservados.
+          © {currentYear} TI Helpdesk. Todos os direitos reservados.
         </p>
       </div>
     </main>
