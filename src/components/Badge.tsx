@@ -25,6 +25,13 @@ const priorityDot: Record<Priority, string> = {
   CRITICAL: 'bg-red-500',
 };
 
+const statusStyles: Record<Status, { bg: string; text: string; border: string }> = {
+  OPEN: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  IN_PROGRESS: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+  RESOLVED: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  CLOSED: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' },
+};
+
 export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
   return (
     <span className={clsx(
@@ -39,10 +46,13 @@ export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const style = statusStyles[status];
   return (
     <span className={clsx(
-      'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-      `badge-status-${status}`,
+      'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border',
+      style.bg,
+      style.text,
+      style.border,
       className
     )}>
       {STATUS_LABELS[status]}
