@@ -68,6 +68,15 @@ const PasswordInputField = memo(function PasswordInputField({
   passwordsMatch?: boolean;
   passwordsMismatch?: boolean;
 }) {
+  const inputClassName = field === 'confirmPassword'
+    ? `w-full px-4 py-2.5 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all ${passwordsMismatch
+      ? 'border-red-300 focus:ring-red-400'
+      : passwordsMatch
+        ? 'border-emerald-300 focus:ring-emerald-400'
+        : 'border-slate-200 focus:ring-brand-500'
+    }`
+    : 'w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent';
+
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
@@ -78,12 +87,7 @@ const PasswordInputField = memo(function PasswordInputField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           required
-          className={field === 'confirmPassword' ? `w-full px-4 py-2.5 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all ${passwordsMismatch
-              ? 'border-red-300 focus:ring-red-400'
-              : passwordsMatch
-                ? 'border-emerald-300 focus:ring-emerald-400'
-                : 'border-slate-200 focus:ring-brand-500'
-            }` : 'w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent'}
+          className={inputClassName}
         />
         <button
           type="button"
@@ -125,6 +129,21 @@ export default function ChangePasswordForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const toggleShow = useCallback(
+    (field: keyof typeof showPasswords) =>
+      setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] })),
+    []
+  );
+
+  const handlePasswordChange = useCallback(
+    (field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) =>
+      setForm((prev) => ({ ...prev, [field]: value })),
+    []
+  );
+
+  const passwordsMatch = form.confirmPassword && form.newPassword === form.confirmPassword;
+  const passwordsMismatch = form.confirmPassword && form.newPassword !== form.confirmPassword;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -161,23 +180,6 @@ export default function ChangePasswordForm() {
     }
   }
 
-
-
-  const toggleShow = useCallback(
-    (field: keyof typeof showPasswords) =>
-      setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] })),
-    []
-  );
-
-  const handlePasswordChange = useCallback(
-    (field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) =>
-      setForm((prev) => ({ ...prev, [field]: value })),
-    []
-  );
-
-  const passwordsMatch = form.confirmPassword && form.newPassword === form.confirmPassword;
-  const passwordsMismatch = form.confirmPassword && form.newPassword !== form.confirmPassword;
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -189,15 +191,14 @@ export default function ChangePasswordForm() {
         </div>
       )}
 
-      <PasswordInput
-        label="SenhaField
+      <PasswordInputField
         label="Senha temporária atual"
-      field="currentPassword"
-      value={form.currentPassword}
-      placeholder="Digite a senha temporária"
-      showPassword={showPasswords.current}
-      onToggleShow={() => toggleShow('current')}
-      onChange={(value) => handlePasswordChange('currentPassword', value)}
+        field="currentPassword"
+        value={form.currentPassword}
+        placeholder="Digite a senha temporária"
+        showPassword={showPasswords.current}
+        onToggleShow={() => toggleShow('current')}
+        onChange={(value) => handlePasswordChange('currentPassword', value)}
       />
 
       <PasswordInputField
@@ -221,7 +222,8 @@ export default function ChangePasswordForm() {
         onChange={(value) => handlePasswordChange('confirmPassword', value)}
         passwordsMatch={passwordsMatch}
         passwordsMismatch={passwordsMismatch}
-      /
+      />
+
       <button
         type="submit"
         disabled={loading || !!passwordsMismatch}
