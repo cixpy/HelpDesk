@@ -141,8 +141,8 @@ export default function ChangePasswordForm() {
     []
   );
 
-  const passwordsMatch = form.confirmPassword && form.newPassword === form.confirmPassword;
-  const passwordsMismatch = form.confirmPassword && form.newPassword !== form.confirmPassword;
+  const passwordsMatch = !!(form.confirmPassword && form.newPassword === form.confirmPassword);
+  const passwordsMismatch = !!(form.confirmPassword && form.newPassword !== form.confirmPassword);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
