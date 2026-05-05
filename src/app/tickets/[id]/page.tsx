@@ -49,7 +49,7 @@ export default async function TicketPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Back */}
       <div className="flex items-center gap-2 mb-6">
         <Link href="/tickets" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -62,14 +62,14 @@ export default async function TicketPage({ params }: { params: { id: string } })
         <span className="text-slate-600 text-sm font-mono">#{ticket.id}</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* Main content */}
-        <div className="col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-4 md:space-y-6">
           {/* Ticket info */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-            <div className="flex items-start gap-3 mb-4">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-4">
               <div className="flex-1">
-                <h1 className="text-xl font-bold text-slate-900">{ticket.title}</h1>
+                <h1 className="text-lg md:text-xl font-bold text-slate-900">{ticket.title}</h1>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <StatusBadge status={ticket.status} />
                   <PriorityBadge priority={ticket.priority} />
@@ -84,7 +84,7 @@ export default async function TicketPage({ params }: { params: { id: string } })
 
           {/* Status history */}
           {ticket.statusHistory.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-6">
               <h3 className="font-semibold text-slate-800 mb-4 text-sm">Histórico</h3>
               <div className="space-y-3">
                 {ticket.statusHistory.map((history) => (
@@ -119,7 +119,7 @@ export default async function TicketPage({ params }: { params: { id: string } })
         {/* Sidebar */}
         <div className="space-y-4">
           {/* Details */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5">
             <h3 className="font-semibold text-slate-800 mb-4 text-sm">Detalhes</h3>
             <dl className="space-y-3">
               <div>
