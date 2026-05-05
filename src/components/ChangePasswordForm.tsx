@@ -1,6 +1,6 @@
 'use client';
 // src/components/ChangePasswordForm.tsx
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
 function PasswordStrength({ password }: { password: string }) {
@@ -45,6 +45,79 @@ function PasswordStrength({ password }: { password: string }) {
   );
 }
 
+const PasswordInputField = memo(function PasswordInputField({
+  label,
+  field,
+  value,
+  placeholder,
+  showPassword,
+  onToggleShow,
+  onChange,
+  showStrength,
+  passwordsMatch,
+  passwordsMismatch,
+}: {
+  label: string;
+  field: string;
+  value: string;
+  placeholder: string;
+  showPassword: boolean;
+  onToggleShow: () => void;
+  onChange: (value: string) => void;
+  showStrength?: boolean;
+  passwordsMatch?: boolean;
+  passwordsMismatch?: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+      <div className="relative">
+        <input
+          type={showPassword ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required
+          className={field === 'confirmPassword' ? `w-full px-4 py-2.5 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all ${passwordsMismatch
+              ? 'border-red-300 focus:ring-red-400'
+              : passwordsMatch
+                ? 'border-emerald-300 focus:ring-emerald-400'
+                : 'border-slate-200 focus:ring-brand-500'
+            }` : 'w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent'}
+        />
+        <button
+          type="button"
+          onClick={onToggleShow}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+        >
+          {showPassword ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {showStrength && <PasswordStrength password={value} />}
+      {field === 'confirmPassword' && passwordsMatch && (
+        <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          As senhas coincidem
+        </p>
+      )}
+      {field === 'confirmPassword' && passwordsMismatch && (
+        <p className="text-xs text-red-500 mt-1.5">As senhas não coincidem</p>
+      )}
+    </div>
+  );
+});
+
 export default function ChangePasswordForm() {
   const router = useRouter();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -88,55 +161,19 @@ export default function ChangePasswordForm() {
     }
   }
 
-  const toggleShow = (field: keyof typeof showPasswords) =>
-    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
 
-  function PasswordInput({
-    label,
-    field,
-    value,
-    placeholder,
-    showStrength,
-  }: {
-    label: string;
-    field: keyof typeof showPasswords;
-    value: string;
-    placeholder: string;
-    showStrength?: boolean;
-  }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
-        <div className="relative">
-          <input
-            type={showPasswords[field] ? 'text' : 'password'}
-            value={value}
-            onChange={(e) => setForm({ ...form, [field === 'current' ? 'currentPassword' : field === 'new' ? 'newPassword' : 'confirmPassword']: e.target.value })}
-            placeholder={placeholder}
-            required
-            className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
-          <button
-            type="button"
-            onClick={() => toggleShow(field)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            {showPasswords[field] ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            )}
-          </button>
-        </div>
-        {showStrength && <PasswordStrength password={value} />}
-      </div>
-    );
-  }
+
+  const toggleShow = useCallback(
+    (field: keyof typeof showPasswords) =>
+      setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] })),
+    []
+  );
+
+  const handlePasswordChange = useCallback(
+    (field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) =>
+      setForm((prev) => ({ ...prev, [field]: value })),
+    []
+  );
 
   const passwordsMatch = form.confirmPassword && form.newPassword === form.confirmPassword;
   const passwordsMismatch = form.confirmPassword && form.newPassword !== form.confirmPassword;
@@ -153,67 +190,38 @@ export default function ChangePasswordForm() {
       )}
 
       <PasswordInput
+        label="SenhaField
         label="Senha temporária atual"
-        field="current"
-        value={form.currentPassword}
-        placeholder="Digite a senha temporária"
+      field="currentPassword"
+      value={form.currentPassword}
+      placeholder="Digite a senha temporária"
+      showPassword={showPasswords.current}
+      onToggleShow={() => toggleShow('current')}
+      onChange={(value) => handlePasswordChange('currentPassword', value)}
       />
 
-      <PasswordInput
+      <PasswordInputField
         label="Nova senha"
-        field="new"
+        field="newPassword"
         value={form.newPassword}
         placeholder="Mínimo 8 caracteres"
+        showPassword={showPasswords.new}
+        onToggleShow={() => toggleShow('new')}
+        onChange={(value) => handlePasswordChange('newPassword', value)}
         showStrength
       />
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirmar nova senha</label>
-        <div className="relative">
-          <input
-            type={showPasswords.confirm ? 'text' : 'password'}
-            value={form.confirmPassword}
-            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-            placeholder="Repita a nova senha"
-            required
-            className={`w-full px-4 py-2.5 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-              passwordsMismatch
-                ? 'border-red-300 focus:ring-red-400'
-                : passwordsMatch
-                ? 'border-emerald-300 focus:ring-emerald-400'
-                : 'border-slate-200 focus:ring-brand-500'
-            }`}
-          />
-          <button
-            type="button"
-            onClick={() => toggleShow('confirm')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            {showPasswords.confirm ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            )}
-          </button>
-        </div>
-        {passwordsMatch && (
-          <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            As senhas coincidem
-          </p>
-        )}
-        {passwordsMismatch && (
-          <p className="text-xs text-red-500 mt-1.5">As senhas não coincidem</p>
-        )}
-      </div>
-
+      <PasswordInputField
+        label="Confirmar nova senha"
+        field="confirmPassword"
+        value={form.confirmPassword}
+        placeholder="Repita a nova senha"
+        showPassword={showPasswords.confirm}
+        onToggleShow={() => toggleShow('confirm')}
+        onChange={(value) => handlePasswordChange('confirmPassword', value)}
+        passwordsMatch={passwordsMatch}
+        passwordsMismatch={passwordsMismatch}
+      /
       <button
         type="submit"
         disabled={loading || !!passwordsMismatch}
