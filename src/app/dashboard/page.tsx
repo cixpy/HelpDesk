@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { PriorityBadge, StatusBadge } from '@/components/Badge';
+import RefreshButton from '@/components/RefreshButton';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -40,11 +41,14 @@ export default async function DashboardPage() {
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Olá, {user.name.split(' ')[0]} 👋
-        </h1>
-        <p className="text-slate-500 mt-1">Aqui está um resumo dos seus chamados de TI.</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Olá, {user.name.split(' ')[0]} 👋
+          </h1>
+          <p className="text-slate-500 mt-1">Aqui está um resumo dos seus chamados de TI.</p>
+        </div>
+        <RefreshButton />
       </div>
 
       {/* Stats */}

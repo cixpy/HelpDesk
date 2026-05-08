@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { PriorityBadge, StatusBadge, CategoryBadge } from '@/components/Badge';
+import RefreshButton from '@/components/RefreshButton';
 import { Status, Priority, Category } from '@prisma/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -122,15 +123,18 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
           <h1 className="text-2xl font-bold text-slate-900">{pageTitle}</h1>
           <p className="text-slate-500 text-sm mt-0.5">{pageSubtitle}</p>
         </div>
-        <Link
-          href="/tickets/new"
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Chamado
-        </Link>
+        <div className="flex items-center gap-4">
+          <RefreshButton />
+          <Link
+            href="/tickets/new"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Novo Chamado
+          </Link>
+        </div>
       </div>
 
       <form className="bg-white rounded-2xl border border-slate-100 p-4 mb-6 flex flex-wrap gap-3 shadow-sm">
