@@ -15,6 +15,37 @@ interface SearchParams {
   priority?: string;
   category?: string;
   search?: string;
+  page?: string;
+  view?: string;
+}
+
+const PAGE_SIZE = 10;
+const ACTIVE_STATUSES: Status[] = ['OPEN', 'IN_PROGRESS', 'WAITING_USER'];
+const HISTORICAL_STATUSES: Status[] = ['RESOLVED', 'CLOSED'];
+
+function SelectShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative min-w-48 flex-1">
+      {children}
+      <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  );
+}
+
+function buildTicketsHref(searchParams: SearchParams, page: number) {
+  const params = new URLSearchParams();
+
+  if (searchParams.search) params.set('search', searchParams.search);
+  if (searchParams.status) params.set('status', searchParams.status);
+  if (searchParams.priority) params.set('priority', searchParams.priority);
+  if (searchParams.category) params.set('category', searchParams.category);
+  if (searchParams.view) params.set('view', searchParams.view);
+  if (page > 1) params.set('page', String(page));
+
+  const query = params.toString();
+  return query ? `/tickets?${query}` : '/tickets';
 }
 
 export default async function TicketsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -33,8 +64,28 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
     ];
   }
 
+  const hasExplicitStatusFilter = Boolean(searchParams.status);
+  const isHistoricalView = searchParams.view === 'historical';
+  const currentPage = Math.max(1, Number(searchParams.page || '1') || 1);
+
+  const listWhere = hasExplicitStatusFilter
+    ? where
+    : isHistoricalView
+      ? { ...where, status: { in: HISTORICAL_STATUSES } }
+      : { ...where, status: { in: ACTIVE_STATUSES } };
+
+  const totalTickets = await prisma.ticket.count({ where: listWhere });
+  const totalPages = Math.max(1, Math.ceil(totalTickets / PAGE_SIZE));
+  const page = Math.min(currentPage, totalPages);
+  const pageTitle = isHistoricalView ? 'Histórico' : 'Chamados';
+  const pageSubtitle = isHistoricalView
+    ? `${totalTickets} chamado(s) resolvido(s) e fechado(s)`
+    : hasExplicitStatusFilter
+      ? `${totalTickets} chamado(s) encontrado(s)`
+      : `${totalTickets} chamado(s) em aberto`;
+
   const rawTickets = await prisma.ticket.findMany({
-    where,
+    where: listWhere,
     select: {
       id: true,
       title: true,
@@ -46,11 +97,13 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
       assigneeId: true,
       _count: { select: { comments: true } },
     },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
   });
 
   // Load related users separately to avoid runtime errors when DB has inconsistent relations
-  const userIds = Array.from(new Set(rawTickets.flatMap(t => [t.creatorId, t.assigneeId].filter(Boolean) as number[])));
+  const userIds = Array.from(new Set(rawTickets.flatMap((t) => [t.creatorId, t.assigneeId].filter(Boolean) as number[])));
   const users = userIds.length > 0
     ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, department: true } })
     : [];
@@ -64,11 +117,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Chamados</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{tickets.length} chamado(s) encontrado(s)</p>
+          <h1 className="text-2xl font-bold text-slate-900">{pageTitle}</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{pageSubtitle}</p>
         </div>
         <Link
           href="/tickets/new"
@@ -81,56 +133,60 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
         </Link>
       </div>
 
-      {/* Filters */}
       <form className="bg-white rounded-2xl border border-slate-100 p-4 mb-6 flex flex-wrap gap-3 shadow-sm">
         <input
           name="search"
           defaultValue={searchParams.search}
           placeholder="Pesquisar chamados..."
-          className="flex-1 min-w-48 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="min-w-48 flex-1 rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
         />
-        <select
-          name="status"
-          defaultValue={searchParams.status || ''}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          <option value="">Todos os status</option>
-          {Object.entries(STATUS_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
-        <select
-          name="priority"
-          defaultValue={searchParams.priority || ''}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          <option value="">Todas as prioridades</option>
-          {Object.entries(PRIORITY_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
-        <select
-          name="category"
-          defaultValue={searchParams.category || ''}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          <option value="">Todas as categorias</option>
-          {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
+        <SelectShell>
+          <select
+            name="status"
+            defaultValue={searchParams.status || ''}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 pr-10 text-sm text-slate-800 outline-none transition-colors focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+          >
+            <option value="">Todos os status</option>
+            {Object.entries(STATUS_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </SelectShell>
+        <SelectShell>
+          <select
+            name="priority"
+            defaultValue={searchParams.priority || ''}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 pr-10 text-sm text-slate-800 outline-none transition-colors focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+          >
+            <option value="">Todas as prioridades</option>
+            {Object.entries(PRIORITY_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </SelectShell>
+        <SelectShell>
+          <select
+            name="category"
+            defaultValue={searchParams.category || ''}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 pr-10 text-sm text-slate-800 outline-none transition-colors focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+          >
+            <option value="">Todas as categorias</option>
+            {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </SelectShell>
         <button
           type="submit"
-          className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+          className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
         >
           Filtrar
         </button>
-        <Link href="/tickets" className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+        <Link href="/tickets" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
           Limpar
         </Link>
       </form>
 
-      {/* Tickets Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {tickets.length === 0 ? (
           <div className="py-20 text-center">
@@ -189,6 +245,30 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
               ))}
             </tbody>
           </table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            <p className="text-sm text-slate-500">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <Link
+                href={buildTicketsHref(searchParams, Math.max(1, page - 1))}
+                aria-disabled={page === 1}
+                className={page === 1 ? 'px-3 py-2 rounded-lg text-sm font-medium border pointer-events-none border-slate-100 text-slate-300 bg-white' : 'px-3 py-2 rounded-lg text-sm font-medium border transition-colors border-slate-200 text-slate-700 hover:bg-white'}
+              >
+                Anterior
+              </Link>
+              <Link
+                href={buildTicketsHref(searchParams, Math.min(totalPages, page + 1))}
+                aria-disabled={page === totalPages}
+                className={page === totalPages ? 'px-3 py-2 rounded-lg text-sm font-medium border pointer-events-none border-slate-100 text-slate-300 bg-white' : 'px-3 py-2 rounded-lg text-sm font-medium border transition-colors border-slate-200 text-slate-700 hover:bg-white'}
+              >
+                Próxima
+              </Link>
+            </div>
+          </div>
         )}
       </div>
     </div>

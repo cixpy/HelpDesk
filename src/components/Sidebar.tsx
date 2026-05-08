@@ -2,7 +2,7 @@
 // src/components/Sidebar.tsx
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 
 interface SidebarProps {
@@ -46,6 +46,18 @@ const navItems = [
   },
 ];
 
+const technicianNavItems = [
+  {
+    href: '/tickets?view=historical',
+    label: 'Solucionados',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+      </svg>
+    ),
+  },
+];
+
 const adminNavItems = [
   {
     href: '/admin/users',
@@ -72,6 +84,7 @@ const roleBadgeColors: Record<string, string> = {
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -96,9 +109,15 @@ export default function Sidebar({ user }: SidebarProps) {
   }
 
   function NavLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
-    const isActive =
-      pathname === href ||
-      (href !== '/dashboard' && href !== '/tickets/new' && pathname.startsWith(href));
+    const [baseHref, queryString] = href.split('?');
+    const isQueryLink = Boolean(queryString);
+    const currentView = searchParams.get('view');
+    const currentStatus = searchParams.get('status');
+    const linkStatus = isQueryLink ? new URLSearchParams(queryString).get('status') : null;
+    const linkView = isQueryLink ? new URLSearchParams(queryString).get('view') : null;
+    const isActive = isQueryLink
+      ? pathname === baseHref && currentStatus === linkStatus && currentView === linkView
+      : pathname === href || (href !== '/dashboard' && href !== '/tickets/new' && pathname.startsWith(href));
     return (
       <Link
         href={href}
@@ -185,6 +204,17 @@ export default function Sidebar({ user }: SidebarProps) {
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
           ))}
+
+          {user.role === 'TECHNICIAN' || user.role === 'ADMIN' ? (
+            <>
+              <div className="pb-1 pt-4">
+                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Chamados</p>
+              </div>
+              {technicianNavItems.map((item) => (
+                <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+              ))}
+            </>
+          ) : null}
 
           {user.role === 'ADMIN' && (
             <>

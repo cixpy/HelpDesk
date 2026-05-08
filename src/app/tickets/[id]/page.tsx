@@ -39,6 +39,9 @@ export default async function TicketPage({ params }: { params: { id: string } })
   if (user.role === 'USER' && ticket.creatorId !== user.id) notFound();
 
   const canManage = user.role === 'TECHNICIAN' || user.role === 'ADMIN';
+  const resolvedStatuses = new Set(['RESOLVED', 'CLOSED']);
+  const regularHistory = ticket.statusHistory.filter((history) => !resolvedStatuses.has(history.newStatus));
+  const resolvedHistory = ticket.statusHistory.filter((history) => resolvedStatuses.has(history.newStatus));
 
   let technicians: { id: number; name: string; email: string }[] = [];
   if (canManage) {
@@ -83,11 +86,11 @@ export default async function TicketPage({ params }: { params: { id: string } })
           </div>
 
           {/* Status history */}
-          {ticket.statusHistory.length > 0 && (
+          {regularHistory.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-6">
-              <h3 className="font-semibold text-slate-800 mb-4 text-sm">Histórico</h3>
+              <h3 className="font-semibold text-slate-800 mb-4 text-sm">Histórico convencional</h3>
               <div className="space-y-3">
-                {ticket.statusHistory.map((history) => (
+                {regularHistory.map((history) => (
                   <div key={history.id} className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-brand-400 mt-1.5 flex-shrink-0" />
                     <div>
@@ -95,6 +98,31 @@ export default async function TicketPage({ params }: { params: { id: string } })
                         <span className="font-medium">{history.user.name}</span>
                         {history.oldStatus
                           ? ` alterou o status de "${history.oldStatus}" para "${history.newStatus}"`
+                          : ` abriu o chamado`}
+                        {history.note && <span className="text-slate-500"> — {history.note}</span>}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {format(new Date(history.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resolvedHistory.length > 0 && (
+            <div className="bg-emerald-50/70 rounded-2xl border border-emerald-100 shadow-sm p-4 md:p-6">
+              <h3 className="font-semibold text-emerald-900 mb-4 text-sm">Resolvidos</h3>
+              <div className="space-y-3">
+                {resolvedHistory.map((history) => (
+                  <div key={history.id} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-700">
+                        <span className="font-medium">{history.user.name}</span>
+                        {history.oldStatus
+                          ? ` encerrou o chamado de "${history.oldStatus}" para "${history.newStatus}"`
                           : ` abriu o chamado`}
                         {history.note && <span className="text-slate-500"> — {history.note}</span>}
                       </p>

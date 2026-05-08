@@ -4,17 +4,7 @@ export const dynamic = 'force-dynamic';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ROLE_LABELS } from '@/types';
-import { Role } from '@prisma/client';
 import UsersClient from '@/components/UsersClient';
-
-const roleBadge: Record<Role, string> = {
-  USER: 'bg-slate-100 text-slate-600',
-  TECHNICIAN: 'bg-brand-50 text-brand-700',
-  ADMIN: 'bg-red-50 text-red-700',
-};
 
 export default async function AdminUsersPage() {
   const currentUser = await getCurrentUser();

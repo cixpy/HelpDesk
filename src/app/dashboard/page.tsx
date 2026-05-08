@@ -4,7 +4,6 @@ export const dynamic = 'force-dynamic';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import { CATEGORY_LABELS, STATUS_LABELS, PRIORITY_LABELS } from '@/types';
 import { PriorityBadge, StatusBadge } from '@/components/Badge';
 
 export default async function DashboardPage() {

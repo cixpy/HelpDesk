@@ -1,7 +1,6 @@
 'use client';
 // src/components/UsersClient.tsx
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Role } from '@prisma/client';
 import { ROLE_LABELS } from '@/types';
 import { format } from 'date-fns';
@@ -75,7 +74,6 @@ function PasswordStrength({ password }: { password: string }) {
 }
 
 export default function UsersClient({ users: initialUsers, currentUserId }: { users: User[]; currentUserId: number }) {
-  const router = useRouter();
   const [users, setUsers] = useState(initialUsers);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -318,8 +316,8 @@ export default function UsersClient({ users: initialUsers, currentUserId }: { us
                     className={clsx(
                       'w-full px-3 py-2.5 pr-10 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all',
                       passwordsMismatch ? 'border-red-300 focus:ring-red-400'
-                      : passwordsMatch ? 'border-emerald-300 focus:ring-emerald-400'
-                      : 'border-slate-200 focus:ring-brand-500'
+                        : passwordsMatch ? 'border-emerald-300 focus:ring-emerald-400'
+                          : 'border-slate-200 focus:ring-brand-500'
                     )}
                   />
                   <button type="button" onClick={() => setShowConfirm(!showConfirm)}
